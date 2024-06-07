@@ -1,0 +1,138 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Getting Started: Serving Web Content</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .node circle {
+      fill: #999;
+    }
+
+    .node--internal circle {
+      fill: white;
+      stroke: #555;
+      stroke-width: 1.5px;
+    }
+
+    .node--internal text {
+      fill: black;
+    }
+
+    .node--leaf text {
+      fill: white;
+    }
+
+    .link {
+      fill: none;
+      stroke: #555;
+      stroke-width: 1.5px;
+    }
+
+    .node text {
+      font: 10px sans-serif;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid;
+    }
+    th,td{
+      text-align: center;
+      padding: 5px 10px;
+    }
+    .wrapper{
+      display: flex;
+      justify-content: space-around;
+    }
+
+  </style>
+</head>
+<body>
+<form action="huffmanEncoding">
+  <input type="text" name="text" placeholder="Enter text">
+  <input type="submit" value="Submit">
+</form>
+<p th:text="|entered text: ${text}|" />
+<div class="wrapper">
+  <svg width="1250" height="600"></svg>
+  <div th:if="${not#lists.isEmpty(tableData)}">
+    <table>
+      <tr>
+        <th>Char</th>
+        <th>Count</th>
+        <th>Encoding</th>
+      </tr>
+      <tr th:each="char:${tableData}">
+        <td th:text="${char.getCharacter()}"></td>
+        <td th:text="${char.getCount()}"></td>
+        <td th:text="${char.getEncoding()}"></td>
+      </tr>
+    </table>
+  </div>
+</div>
+<div>
+  <p th:text="|Original message bit count encoded in ASCII: ${originalBitCount}|"></p>
+  <p th:text="|Encoded message bit count: ${savingBitCount}|"></p>
+  <p th:text="|Savings: ${savings}%|"></p>
+</div>
+</body>
+<script th:inline="javascript">
+  /*<![CDATA[*/
+
+  let message = /*[[${text}]]*/ 'default';
+  console.log(message);
+
+  let json = /*[[${json}]]*/ 'default';
+  const data = JSON.parse(json)
+
+  const width = 960;
+  const height = 600;
+  document.getElementsByTagName("svg")[0].innerHTML = ""
+
+  const svg = d3.select("svg"),
+          margin = {top: 20, right: 120, bottom: 20, left: 120},
+          g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+  //    svg.selectAll("*").remove();
+  //svg.html(null)
+
+
+  console.log(data)
+
+  const tree = d3.tree().size([width, height - 160]);
+
+  const root = d3.hierarchy(data);
+
+  tree(root);
+
+  const link = g.selectAll(".link")
+          .data(root.descendants().slice(1))
+          .enter().append("path")
+          .attr("class", "link")
+          .attr("d", d => {
+            return "M" + d.x + "," + d.y
+                    + "C" + d.x + "," + (d.parent.y + 100)
+                    + " " + d.parent.x + "," + (d.parent.y + 100)
+                    + " " + d.parent.x + "," + d.parent.y;
+          });
+
+  const n = g.selectAll(".node")
+          .data(root.descendants())
+          .enter().append("g")
+          .attr("class", d => "node" + (d.children ? " node--internal" : " node--leaf"))
+          .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
+
+  n.append("circle")
+          .attr("r", 20); // Increase the radius of the circles
+
+  n.append("text")
+          .text(d => d.data.name === " " ? "space" : d.data.name);
+
+  /*]]>*/
+</script>
+</html>
